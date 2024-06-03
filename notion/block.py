@@ -430,6 +430,9 @@ class DividerBlock(Block):
 
     _type = "divider"
 
+    def to_markdown(self):
+        return "---"
+
 
 class ColumnListBlock(Block):
     """
@@ -478,6 +481,10 @@ class BasicBlock(Block):
     def _str_fields(self):
         return super()._str_fields() + ["title"]
 
+    def to_markdown(self):
+        if isinstance(self.title, str):
+            return self.title
+        return self.title.to_markdown()
 
 class TodoBlock(BasicBlock):
 
@@ -492,6 +499,8 @@ class TodoBlock(BasicBlock):
     def _str_fields(self):
         return super()._str_fields() + ["checked"]
 
+    def to_markdown(self):
+        return ("[x] " if self.checked else "[ ] ") +  super().to_markdown()
 
 class CodeBlock(BasicBlock):
 
@@ -499,6 +508,9 @@ class CodeBlock(BasicBlock):
 
     language = property_map("language")
     wrap = field_map("format.code_wrap")
+
+    def to_markdown(self):
+        return f"```{self.language}\n" + super().to_markdown() + "\n```"
 
 
 class FactoryBlock(BasicBlock):
@@ -513,16 +525,23 @@ class HeaderBlock(BasicBlock):
 
     _type = "header"
 
+    def to_markdown(self):
+        return "## " + super().to_markdown()
+
 
 class SubheaderBlock(BasicBlock):
 
     _type = "sub_header"
 
+    def to_markdown(self):
+        return "### " + super().to_markdown()
 
 class SubsubheaderBlock(BasicBlock):
 
     _type = "sub_sub_header"
 
+    def to_markdown(self):
+        return "#### " + super().to_markdown()
 
 class PageBlock(BasicBlock):
 
@@ -558,24 +577,39 @@ class PageBlock(BasicBlock):
         return backlinks
 
 
+    def to_markdown(self):
+        return "# " + super().to_markdown() + "\n\n" + '\n\n'.join([block.to_markdown() for block in self.children])
+
 class BulletedListBlock(BasicBlock):
 
     _type = "bulleted_list"
+
+    def to_markdown(self):
+        return "- " + super().to_markdown()
 
 
 class NumberedListBlock(BasicBlock):
 
     _type = "numbered_list"
 
+    def to_markdown(self):
+        return "X. " + super().to_markdown()
+
 
 class ToggleBlock(BasicBlock):
 
     _type = "toggle"
 
+    def to_markdown(self):
+        return "\> " + super().to_markdown()
+
 
 class QuoteBlock(BasicBlock):
 
     _type = "quote"
+
+    def to_markdown(self):
+        return ">" + super().to_markdown()
 
 
 class TextBlock(BasicBlock):

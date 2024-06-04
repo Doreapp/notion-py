@@ -1,3 +1,4 @@
+import json
 import mimetypes
 import os
 import random
@@ -22,6 +23,7 @@ from .utils import (
     add_signed_prefix_as_needed,
     remove_signed_prefix_as_needed,
     get_by_path,
+    slugify,
 )
 
 
@@ -425,6 +427,9 @@ class Block(Record):
             ]
         )
 
+    def to_markdown(self):
+        print(type(self), self.type)
+        raise Exception("Undefined method exception (to_markown) -- " + json.dumps(self.get()))
 
 class DividerBlock(Block):
 
@@ -579,6 +584,13 @@ class PageBlock(BasicBlock):
 
     def to_markdown(self):
         return "# " + super().to_markdown() + "\n\n" + '\n\n'.join([block.to_markdown() for block in self.children])
+
+    def export(self, directory="."):
+        os.makedirs(directory, exist_ok=True)
+        filename = f"{slugify(self.title_plaintext)}-{self.id[-7:]}.md"
+        with open(f"{directory}/{filename}", "w", encoding="utf-8") as fos:
+            fos.write(self.to_markdown())
+
 
 class BulletedListBlock(BasicBlock):
 

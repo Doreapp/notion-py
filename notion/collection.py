@@ -1,3 +1,4 @@
+import yaml
 from cached_property import cached_property
 from copy import deepcopy
 from datetime import datetime, date
@@ -695,6 +696,9 @@ class CollectionRowBlock(PageBlock):
             )
         )
 
+    def to_markdown(self):
+        props = yaml.dump(self.get_all_properties())
+        return "---\n" + props + "---\n\n" + super().to_markdown()
 
 class TemplateBlock(CollectionRowBlock):
     @property

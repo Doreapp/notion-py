@@ -2,6 +2,7 @@ import json
 import mimetypes
 import os
 import random
+from typing import List
 import requests
 import time
 import uuid
@@ -921,6 +922,29 @@ class CalloutBlock(BasicBlock):
     icon = field_map("format.page_icon")
 
     _type = "callout"
+
+class TableBlock(BasicBlock):
+
+    _type = "table"
+
+    column_order = field_map("format.table_block_column_order")
+
+    def to_markdown(self):
+        children_md = [child.to_markdown(self.column_order) for child in self.children]
+        return (
+            children_md[0]
+            + ("\n| " + "|".join(" --- " for _ in self.column_order) + " |\n")
+            + "\n".join(children_md[1:])
+            + "\n"
+        )
+
+class TableRow(BasicBlock):
+
+    _type = "table_row"
+    properties = field_map("properties")
+
+    def to_markdown(self, column_order: List[str]):
+        return "| "  + " | ".join(self.properties.get(column, [[""]])[0][0] for column in column_order) + " |"
 
 
 BLOCK_TYPES = {

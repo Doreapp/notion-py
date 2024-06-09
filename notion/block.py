@@ -2,6 +2,7 @@ import io
 import mimetypes
 import os
 import random
+from typing import Union
 import requests
 import time
 import uuid
@@ -24,6 +25,7 @@ from .utils import (
     add_signed_prefix_as_needed,
     remove_signed_prefix_as_needed,
     get_by_path,
+    slugify,
 )
 
 
@@ -427,8 +429,12 @@ class Block(Record):
             ]
         )
 
-    def extract_markdown(self, out_directory: str = "extract"):
-        task_id = self._client.post("https://www.notion.so/api/v3/enqueueTask", {
+    def export(self, zip_name: Union[str, None] = None, with_files:bool=False, recursive:bool=False):
+        if not zip_name:
+            zip_name = self.id
+        if not zip_name.endswith(".zip"):
+            zip_name = zip_name + ".zip"
+        payload = {
             "task": {
                 "eventName": "exportBlock",
                 "request": {
@@ -436,19 +442,22 @@ class Block(Record):
                         "id": self.id,
                         "spaceId": self._client.current_space.id,
                     },
-                    "recursive": False,
+                    "recursive": recursive,
                     "exportOptions": {
                         "exportType": "markdown",
                         "timeZone": "America/Los_Angeles",
                         "locale": "en",
                         "collectionViewExportType": "currentView",
-                        "includeContents": "no_files",
                         "preferredViewMap": {}
                     },
                     "shouldExportComments": False
                 }
             }
-        }).json()["taskId"]
+        }
+        if not with_files:
+            payload["task"]["request"]["exportOptions"]["includeContents"] = "no_files"
+
+        task_id = self._client.post("https://www.notion.so/api/v3/enqueueTask", payload).json()["taskId"]
 
         for _ in range(5000):
             response = self._client.post("https://www.notion.so/api/v3/getTasks", {
@@ -459,13 +468,12 @@ class Block(Record):
             time.sleep(0.25)
 
         zip_url = response["results"][0]["status"]["exportURL"]
-
         response = self._client.session.get(zip_url)
         response.raise_for_status()
 
-        # unzip the contents in memory and read the contents of the file inside (there should only be one file, but check the name)
-        with zipfile.ZipFile(io.BytesIO(response.content)) as zip_ref:
-            zip_ref.extractall(out_directory)
+        with open(zip_name, 'wb') as fos:
+            for chunk in response.iter_content():
+                fos.write(chunk)
 
 
 class DividerBlock(Block):

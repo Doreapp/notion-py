@@ -990,6 +990,19 @@ class TableRow(BasicBlock):
         return "| "  + " | ".join(self.properties.get(column, [[""]])[0][0] for column in column_order) + " |"
 
 
+class AliasBlock(BasicBlock):
+
+    _type = "alias"
+    pointer = field_map("format.alias_pointer.id")
+
+    def get_pointed_block(self):
+        return self._client.get_block(self.pointer)
+
+    def to_markdown(self):
+        pointed_block = self.get_pointed_block()
+        return f"[{pointed_block.title_plaintext}]()"
+
+
 BLOCK_TYPES = {
     cls._type: cls
     for cls in locals().values()

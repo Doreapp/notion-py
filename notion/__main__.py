@@ -18,7 +18,7 @@ def main():
         token = token_from_env
     client = NotionClient(token_v2=token)
     if args.command == "export":
-        export(client, args.url)
+        export(client, args.url, args.only_csv)
     else:
         parser.print_help()
         raise SystemExit
@@ -33,6 +33,12 @@ def _build_cli_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(title="command", dest="command")
     export_parser = subparsers.add_parser("export", help="Export a notion page in Markdown and CSV")
     export_parser.add_argument("url", help="Page URL")
+    export_parser.add_argument(
+        "-C",
+        "--only-csv",
+        help="Only exports the database CSV. Must be used with a database id/url.",
+        action="store_true"
+    )
     return parser
 
 if __name__ == "__main__":

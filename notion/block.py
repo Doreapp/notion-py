@@ -821,7 +821,7 @@ class CollectionViewBlock(MediaBlock):
     def _str_fields(self):
         return super()._str_fields() + ["title", "collection"]
 
-    def export(self, directory: str = "."):
+    def export(self, directory: str = ".", only_csv: bool = False):
         if not self.collection:
             # TODO, this happens sometimes...
             return
@@ -829,7 +829,10 @@ class CollectionViewBlock(MediaBlock):
         csv_filepath = os.path.join(directory, csv_filename)
         dirname = f"{slugify(self.title)}-{self.id[-7:]}"
         dirpath = os.path.join(directory, dirname)
-        print("Exporting database", self.title, "into", csv_filepath, "and", dirpath, "...")
+        if only_csv:
+            print("Export database", self.title, "into a CSV at", csv_filepath, "...")
+        else:
+            print("Exporting database", self.title, "into", csv_filepath, "and", dirpath, "...")
         rows = self.collection.query()
         # Export Database as CSV
         csv_header = ",".join(prop["slug"] for prop in self.collection.get_schema_properties())
@@ -837,6 +840,8 @@ class CollectionViewBlock(MediaBlock):
         with open(csv_filepath, "w", encoding="utf-8") as fos:
             fos.write(csv_header + "\n" + csv_content)
         # Export pages as Markdown files
+        if only_csv:
+            return # Stop here
         os.makedirs(dirpath, exist_ok=True)
         for row in rows:
             row.export(dirpath)

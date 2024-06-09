@@ -427,7 +427,7 @@ class Block(Record):
             ]
         )
 
-    def extract_markdown(self):
+    def extract_markdown(self, out_directory: str = "extract"):
         task_id = self._client.post("https://www.notion.so/api/v3/enqueueTask", {
             "task": {
                 "eventName": "exportBlock",
@@ -450,7 +450,7 @@ class Block(Record):
             }
         }).json()["taskId"]
 
-        for i in range(5000):
+        for _ in range(5000):
             response = self._client.post("https://www.notion.so/api/v3/getTasks", {
                 "taskIds": [task_id]
             }).json()
@@ -464,11 +464,8 @@ class Block(Record):
         response.raise_for_status()
 
         # unzip the contents in memory and read the contents of the file inside (there should only be one file, but check the name)
-        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-            names = z.namelist()
-            assert len(names) == 1, "Expected exactly one file in the zip"
-            with z.open(names[0]) as f:
-                return f.read().decode("utf-8")
+        with zipfile.ZipFile(io.BytesIO(response.content)) as zip_ref:
+            zip_ref.extractall(out_directory)
 
 
 class DividerBlock(Block):

@@ -1003,6 +1003,16 @@ class AliasBlock(BasicBlock):
         return f"[{pointed_block.title_plaintext}]()"
 
 
+class BookmarkBlock(BasicBlock):
+
+    _type = "bookmark"
+
+    link = property_map("link")
+
+    def to_markdown(self):
+        return self.link[0][0]
+
+
 BLOCK_TYPES = {
     cls._type: cls
     for cls in locals().values()

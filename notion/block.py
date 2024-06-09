@@ -3,7 +3,7 @@ import mimetypes
 import os
 import random
 import re
-from typing import List
+from typing import List, Union, TYPE_CHECKING
 import requests
 import time
 import uuid
@@ -28,6 +28,8 @@ from .utils import (
     slugify,
 )
 
+if TYPE_CHECKING:
+    from .collection import Collection
 
 class Children(object):
 
@@ -605,7 +607,7 @@ class PageBlock(BasicBlock):
         os.makedirs(directory, exist_ok=True)
         filename = f"{slugify(self.title_plaintext)}-{self.id[-7:]}.md"
         filepath = os.path.join(directory, filename)
-        print("Exporting to", filepath, "...")
+        print("Exporting page", self.title_plaintext, "to", filepath, "...")
         with open(filepath, "w", encoding="utf-8") as fos:
             fos.write(self.to_markdown())
         super().export(directory)
@@ -778,7 +780,7 @@ class CollectionViewBlock(MediaBlock):
     _type = "collection_view"
 
     @property
-    def collection(self):
+    def collection(self) -> Union["Collection", None]:
         collection_id = self.get("collection_id")
         if not collection_id:
             return None
@@ -820,8 +822,24 @@ class CollectionViewBlock(MediaBlock):
         return super()._str_fields() + ["title", "collection"]
 
     def export(self, directory: str = "."):
-        print("TODO export", self, directory)
-        raise Exception("TODO")
+        if not self.collection:
+            # TODO, this happens sometimes...
+            return
+        csv_filename = f"{slugify(self.title)}-{self.id[-7:]}.csv"
+        csv_filepath = os.path.join(directory, csv_filename)
+        dirname = f"{slugify(self.title)}-{self.id[-7:]}"
+        dirpath = os.path.join(directory, dirname)
+        print("Exporting database", self.title, "into", csv_filepath, "and", dirpath, "...")
+        rows = self.collection.query()
+        # Export Database as CSV
+        csv_header = ",".join(prop["slug"] for prop in self.collection.get_schema_properties())
+        csv_content = "\n".join(row.to_csv() for row in rows)
+        with open(csv_filepath, "w", encoding="utf-8") as fos:
+            fos.write(csv_header + "\n" + csv_content)
+        # Export pages as Markdown files
+        os.makedirs(dirpath, exist_ok=True)
+        for row in rows:
+            row.export(dirpath)
 
     def to_markdown(self):
         # TODO (maybe ?) Export the view

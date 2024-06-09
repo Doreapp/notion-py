@@ -1,6 +1,7 @@
 import hashlib
 import json
 import re
+from typing import Union
 import uuid
 
 from requests import Session, HTTPError
@@ -96,7 +97,7 @@ class NotionClient(object):
 
     def start_monitoring(self):
         self._monitor.poll_async()
-    
+
     def _fetch_guest_space_data(self, records):
         """
         guest users have an empty `space` dict, so get the space_id from the `space_view` dict instead,
@@ -178,7 +179,7 @@ class NotionClient(object):
             block_class = BLOCK_TYPES.get(block.get("type", ""), Block)
         return block_class(self, block_id)
 
-    def get_collection(self, collection_id, force_refresh=False):
+    def get_collection(self, collection_id, force_refresh=False) -> Union[Collection, None]:
         """
         Retrieve an instance of Collection that maps to the collection identified by the ID passed in.
         """

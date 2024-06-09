@@ -700,6 +700,21 @@ class CollectionRowBlock(PageBlock):
         props = yaml.dump(self.get_all_properties())
         return "---\n" + props + "---\n\n" + super().to_markdown()
 
+    def to_csv(self):
+        return ",".join(_export_property(prop) for prop in self.get_all_properties().values())
+
+def _export_property(prop):
+    if isinstance(prop, str):
+        return '"' + prop + '"'
+    if isinstance(prop, list):
+        return _export_property(", ".join(val for val in prop))
+    if isinstance(prop, bool):
+        return "true" if prop else "false"
+    if isinstance(prop, NotionDate):
+        # TODO handle end_date, timezone and reminder properties of Notion Dates
+        return prop.start.strftime("%d/%m/%Y")
+    raise Exception("Unable to export property of type " + type(prop).__name__ + ": " + str(prop))
+
 class TemplateBlock(CollectionRowBlock):
     @property
     def is_template(self):

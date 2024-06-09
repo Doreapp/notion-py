@@ -5,6 +5,7 @@ import os
 
 from .export import export
 from .client import NotionClient
+from .search import search
 
 def main():
     """Main entrypoint"""
@@ -19,6 +20,8 @@ def main():
     client = NotionClient(token_v2=token)
     if args.command == "export":
         export(client, args.url, args.only_csv)
+    elif args.command == "search":
+        search(client, args.url)
     else:
         parser.print_help()
         raise SystemExit
@@ -31,6 +34,7 @@ def _build_cli_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("-t", "--token", help="Notion token (v2). Environment variable: NOTION_TOKEN")
     subparsers = parser.add_subparsers(title="command", dest="command")
+    # Export parser
     export_parser = subparsers.add_parser("export", help="Export a notion page in Markdown and CSV")
     export_parser.add_argument("url", help="Page URL")
     export_parser.add_argument(
@@ -39,6 +43,9 @@ def _build_cli_parser() -> argparse.ArgumentParser:
         help="Only exports the database CSV. Must be used with a database id/url.",
         action="store_true"
     )
+    # Search parser
+    search_parser = subparsers.add_parser("search", help="Search for collections inside given block")
+    search_parser.add_argument("url", help="Page URL")
     return parser
 
 if __name__ == "__main__":

@@ -802,7 +802,9 @@ class CollectionViewBlock(MediaBlock):
 
     @property
     def title(self):
-        return self.collection.name
+        if self.collection:
+            return self.collection.name
+        return ""
 
     @title.setter
     def title(self, val):

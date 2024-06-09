@@ -2,6 +2,7 @@ import json
 import mimetypes
 import os
 import random
+import re
 from typing import List
 import requests
 import time
@@ -432,12 +433,19 @@ class Block(Record):
         print(type(self), self.type)
         raise Exception("Undefined method exception (to_markown) -- " + json.dumps(self.get()))
 
+    def export(self, directory: str = "."):
+        print(type(self), self.type)
+        raise Exception("Undefined method exception (export) -- " + json.dumps(self.get()))
+
 class DividerBlock(Block):
 
     _type = "divider"
 
     def to_markdown(self):
         return "---"
+
+    def export(self, directory: str = "."):
+        pass
 
 
 class ColumnListBlock(Block):
@@ -488,9 +496,16 @@ class BasicBlock(Block):
         return super()._str_fields() + ["title"]
 
     def to_markdown(self):
+        children_markdown = "\n\n" + "\n\n".join(child.to_markdown() for child in self.children)
         if isinstance(self.title, str):
-            return self.title
-        return self.title.to_markdown()
+            result = self.title + children_markdown
+        else:
+            result = self.title.to_markdown() + children_markdown
+        return re.sub('\n\n+', '\n\n', result) # To cleanup 2+ new lines
+
+    def export(self, directory: str = "."):
+        for child in self.children:
+            child.export(directory)
 
 class TodoBlock(BasicBlock):
 
@@ -584,13 +599,16 @@ class PageBlock(BasicBlock):
 
 
     def to_markdown(self):
-        return "# " + super().to_markdown() + "\n\n" + '\n\n'.join([block.to_markdown() for block in self.children])
+        return "# " + super().to_markdown()
 
     def export(self, directory="."):
         os.makedirs(directory, exist_ok=True)
         filename = f"{slugify(self.title_plaintext)}-{self.id[-7:]}.md"
-        with open(f"{directory}/{filename}", "w", encoding="utf-8") as fos:
+        filepath = os.path.join(directory, filename)
+        print("Exporting to", filepath, "...")
+        with open(filepath, "w", encoding="utf-8") as fos:
             fos.write(self.to_markdown())
+        super().export(directory)
 
 
 class BulletedListBlock(BasicBlock):
@@ -801,6 +819,13 @@ class CollectionViewBlock(MediaBlock):
     def _str_fields(self):
         return super()._str_fields() + ["title", "collection"]
 
+    def export(self, directory: str = "."):
+        print("TODO export", self, directory)
+        raise Exception("TODO")
+
+    def to_markdown(self):
+        # TODO (maybe ?) Export the view
+        return "" # Collections are not exported in markdown yet
 
 class CollectionViewBlockViews(Children):
 

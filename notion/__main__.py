@@ -3,6 +3,7 @@
 import argparse
 import os
 
+from .export import export
 from .client import NotionClient
 
 def main():
@@ -21,10 +22,6 @@ def main():
     else:
         parser.print_help()
         raise SystemExit
-
-def export(client: NotionClient, url: str):
-    """Export a Notion page from URL"""
-    print("TODO export", url)
 
 
 def _build_cli_parser() -> argparse.ArgumentParser:
